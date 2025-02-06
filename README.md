@@ -13,4 +13,4 @@ Description: CCTV cameras near the College gate detect and recognise vehicles an
 cameras are equipped with a database which stores the entry and exit times of the vehicles that enter through the gate,
 this database is self backed up and restoration database which deletes 3 month old data and creates room for new data to be pushed in the database.
 
-Progress Tracker Notion : https://www.notion.so/1927d30c9eb980db9cafdd8267a1757a?v=1927d30c9eb9816e80e0000cfcf89143&pvs=4
+Progress Tracker Notion : 
