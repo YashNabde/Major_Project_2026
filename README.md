@@ -3,8 +3,11 @@ SYNCKPOD : Major Project I/II/III phases, documented, and pushed on this repo.
 
 Group Members :
 Subodh Manoj Donglikar - B12
+
 Chitra Sandeepkumar Kakad - B22
+
 Yash Vijay Nabade - B36
+
 Om Kailash Patil - B41
 
 Problem Statement : Vehile Number Plate Detection and Recognition for MIT Gate.
