@@ -22,6 +22,7 @@ Progress Tracker Notion : https://www.notion.so/1927d30c9eb980db9cafdd8267a1757a
 
 Project Review 1 :
 Accepted project, instructed to improve and add certain security enhancements to the project. Also, increase accuracy and decrease recognition time.
+
 To Do :
 1. Understand and implement ANPR, OCR and other related libraries and datasets required to execute the project.
 2. Maintain and commit to GitHub
