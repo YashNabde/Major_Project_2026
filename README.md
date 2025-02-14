@@ -18,3 +18,11 @@ cameras are equipped with a database which stores the entry and exit times of th
 this database is self backed up and restoration database which deletes 3 month old data and creates room for new data to be pushed in the database.
 
 Progress Tracker Notion : https://www.notion.so/1927d30c9eb980db9cafdd8267a1757a?v=1927d30c9eb9816e80e0000cfcf89143&pvs=4
+
+
+Project Review 1 :
+Accepted project, instructed to improve and add certain security enhancements to the project. Also, increase accuracy and decrease recognition time.
+To Do :
+1. Understand and implement ANPR, OCR and other related libraries and datasets required to execute the project.
+2. Maintain and commit to GitHub
+3. Keep timely docummentation and assessment of the project progress.
