@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANPR Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #1a1a2e; /* Dark blue-gray */
+            color: #e0e0e0; /* Light gray for better contrast */
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            margin-top: 30px;
+        }
+        .navbar {
+            background-color: #16213e; /* Slightly darker navbar */
+        }
+        .navbar-brand {
+            color: #f0a500 !important; /* Gold highlight */
+            font-weight: bold;
+        }
+        .table {
+            background-color: #0f3460; /* Deep navy */
+            color: #f5f5f5; /* Soft white */
+        }
+        .table th {
+            background-color: #16213e; /* Darker headers */
+            color: #f0a500; /* Gold text */
+        }
+        .table tbody tr:hover {
+            background-color: #1e3799; /* Soft hover effect */
+        }
+        .btn-danger {
+            background-color: #d90429;
+            border: none;
+        }
+        .btn-danger:hover {
+            background-color: #ff0000;
+        }
+        .btn-warning {
+            background-color: #f0a500;
+            color: black;
+            font-weight: bold;
+            border: none;
+        }
+        .btn-warning:hover {
+            background-color: #ffcc00;
+        }
+        input[type="text"] {
+            background-color: #0f3460;
+            color: white;
+            border: 1px solid #f0a500;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">🚘 ANPR Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2 class="text-center mb-4">📋 Entry & Exit Logs</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Plate Number</th>
+                    <th>Entry Time</th>
+                    <th>Exit Time</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log[0] }}</td>
+                    <td>{{ log[1] }}</td>
+                    <td>{{ log[2] }}</td>
+                    <td>{{ log[3] }}</td>
+                    <td>{{ log[4] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2 class="text-center mt-5">🚨 Blacklisted Plates</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Plate Number</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for plate in blacklisted %}
+                <tr>
+                    <td>{{ plate[0] }}</td>
+                    <td>{{ plate[1] }}</td>
+                    <td>
+                        <a href="{{ url_for('remove_blacklist', plate_number=plate[1]) }}" class="btn btn-danger">Remove</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2 class="text-center mt-5">➕ Add to Blacklist</h2>
+        <form action="{{ url_for('blacklist') }}" method="post" class="text-center">
+            <input type="text" name="plate_number" placeholder="Enter Plate Number" required class="form-control w-50 mx-auto">
+            <button type="submit" class="btn btn-warning mt-3">Blacklist</button>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
