@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIT Smart Gate - SQL Database Integrated</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- AlaSQL: Client-side SQL Database -->
+    <script src="https://cdn.jsdelivr.net/npm/alasql@4.0.0/dist/alasql.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #e2e8f0; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+
+        /* Animations */
+        @keyframes flashRed {
+            0% { background-color: rgba(220, 38, 38, 0.1); }
+            50% { background-color: rgba(220, 38, 38, 0.4); }
+            100% { background-color: rgba(220, 38, 38, 0.1); }
+        }
+        .critical-alert { animation: flashRed 2s infinite; }
+        
+        .log-enter { animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <header class="h-16 bg-slate-900 border-b border-slate-700 flex items-center justify-between px-6 shadow-lg z-20">
+        <div class="flex items-center gap-3">
+            <div class="bg-amber-600 w-8 h-8 rounded flex items-center justify-center font-bold text-white shadow-lg">SQL</div>
+            <h1 class="text-lg font-bold tracking-wide text-white">MIT GATE INTELLIGENCE <span class="text-xs font-normal text-slate-400 ml-2"></span></h1>
+        </div>
+        <div class="flex items-center gap-6 text-sm">
+            <div class="flex flex-col items-end">
+                <span class="text-slate-500 text-[10px] font-bold uppercase">DB Engine Status</span>
+                <span class="text-green-400 font-mono text-xs flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> ACTIVE (AlaSQL)
+                </span>
+            </div>
+            <div class="border-l border-slate-700 pl-6 text-right">
+                <div id="clock" class="font-mono font-bold text-lg">00:00:00</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="flex-1 grid grid-cols-12 gap-4 p-4 overflow-hidden bg-[#0f172a]">
+        
+        <!-- LEFT: Video Feed & SQL Console (7 cols) -->
+        <div class="col-span-12 lg:col-span-7 flex flex-col gap-4">
+            
+            <!-- Video Player -->
+            <div class="relative bg-black rounded-xl border border-slate-700 shadow-2xl flex-1 overflow-hidden group">
+                <video id="gateVideo" class="w-full h-full object-contain" controls autoplay muted>
+                    <source src="gate_clip3.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                
+                <!-- Overlays -->
+                <div class="absolute top-4 left-4 flex gap-2">
+                    <span class="bg-red-600/90 text-white text-[10px] font-bold px-2 py-1 rounded animate-pulse">● LIVE REC</span>
+                    <span class="bg-black/60 text-green-400 text-[10px] font-mono px-2 py-1 rounded border border-green-900">CAM_01</span>
+                </div>
+                <span id="videoTime" class="absolute top-4 right-4 text-white/50 font-mono text-xs drop-shadow-md">00:00:00</span>
+
+                <!-- Bounding Box -->
+                <div id="detectionBox" class="hidden absolute border-2 border-green-400 bg-green-400/10 px-3 py-1 rounded transition-all duration-300">
+                    <span id="detectedPlateOverlay" class="text-green-300 font-mono font-bold text-lg drop-shadow-md"></span>
+                </div>
+            </div>
+
+            <!-- LIVE SQL CONSOLE (To show database activity) -->
+            <div class="h-40 bg-slate-950 rounded-xl border border-slate-800 p-4 font-mono text-xs overflow-hidden flex flex-col">
+                <div class="flex justify-between items-center mb-2 border-b border-slate-800 pb-2">
+                    <span class="text-amber-500 font-bold">>_ SQL COMMAND STREAM</span>
+                    <span class="text-slate-500">Connected: LocalStorage.db</span>
+                </div>
+                <div id="sqlConsole" class="flex-1 overflow-y-auto space-y-1 text-slate-300">
+                    <!-- Queries will appear here -->
+                    <div class="text-slate-500 italic">-- Database initialized successfully...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Database Tables (5 cols) -->
+        <div class="col-span-12 lg:col-span-5 flex flex-col gap-4 h-full">
+            
+            <!-- TABLE: Vehicle Logs -->
+            <div class="bg-slate-900 rounded-xl border border-slate-800 flex flex-col h-3/5 overflow-hidden shadow-xl">
+                <div class="bg-slate-950/50 p-3 border-b border-slate-800 flex justify-between items-center sticky top-0">
+                    <h3 class="font-bold text-sm text-slate-200 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+                        Vehicle_logs
+                    </h3>
+                    <button onclick="clearDB()" class="text-[10px] bg-red-900/30 text-red-400 border border-red-900 px-2 py-0.5 rounded hover:bg-red-900/50 transition">RESET DB</button>
+                </div>
+                <div class="overflow-y-auto flex-1 p-0">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-950 text-[10px] uppercase text-slate-500 sticky top-0 z-10">
+                            <tr>
+                                <th class="p-3">ID</th>
+                                <th class="p-3">Plate</th>
+                                <th class="p-3">Description</th>
+                                <th class="p-3 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTable" class="text-sm divide-y divide-slate-800">
+                            <!-- SQL Data Here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TABLE: Blacklist -->
+            <div class="bg-slate-900 rounded-xl border border-red-900/40 flex flex-col h-2/5 overflow-hidden shadow-xl">
+                <div class="bg-red-950/30 p-3 border-b border-red-900/30 flex justify-between items-center">
+                    <h3 class="font-bold text-sm text-red-400 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                         Blacklist
+                    </h3>
+                </div>
+                <div class="overflow-y-auto flex-1 bg-gradient-to-b from-red-950/10 to-transparent">
+                    <table class="w-full text-left">
+                        <thead class="bg-red-950/20 text-[10px] uppercase text-red-400/60 sticky top-0 z-10">
+                            <tr>
+                                <th class="p-3">Time</th>
+                                <th class="p-3">Plate</th>
+                                <th class="p-3 text-right">Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody id="blacklistTable" class="text-sm divide-y divide-red-900/20">
+                            <!-- SQL Data Here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. SQL DATABASE INITIALIZATION ---
+        function initSQL() {
+            // Create LocalStorage Database if not exists
+            alasql('CREATE LOCALSTORAGE DATABASE IF NOT EXISTS mit_gate_db');
+            alasql('ATTACH LOCALSTORAGE DATABASE mit_gate_db');
+            alasql('USE mit_gate_db');
+
+            // Create Tables if they don't exist
+            alasql('CREATE TABLE IF NOT EXISTS vehicle_logs (id INT AUTO_INCREMENT, timestamp STRING, plate STRING, description STRING, action STRING, entry_time STRING)');
+            alasql('CREATE TABLE IF NOT EXISTS blacklist_logs (id INT AUTO_INCREMENT, timestamp STRING, plate STRING, reason STRING)');
+            
+            printSQL("Database initialized. Tables ready.");
+            refreshTables();
+        }
+
+        // --- 2. DATA CONFIGURATION (Gate Clip 3) ---
+        const vehicleEvents = [
+            { time: 23, plate: "MH20GV3260", type: "ENTRY", color: "white", desc: "White Tata Car" },
+            { time: 175, plate: "MH20CP0688", type: "ENTRY", color: "red", desc: "Red Bike" },
+            { time: 230, plate: "MP68MG5114", type: "ENTRY", color: "black", desc: "Black Bike" },
+            { time: 250, plate: "MH20GT7384", type: "ENTRY", color: "white", desc: "White Scooty" },
+            { time: 319, plate: "MH20EW8784", type: "ENTRY", color: "grey", desc: "Grey Scooty" },
+            { time: 359, plate: "MH20CZ8911", type: "ENTRY", color: "black", desc: "Bike" },
+            { time: 430, plate: "MH52A6707", type: "ENTRY", color: "red", desc: "Black-Red Bike" },
+            { time: 507, plate: "MH20HG4544", type: "ENTRY", color: "brown", desc: "Brown Scooty" },
+            { time: 522, plate: "MH52A6707", type: "EXIT", color: "red", desc: "Black-Red Bike" }, 
+            { time: 599, plate: "MH20HD8429", type: "ENTRY", color: "black", desc: "Black Scooty" },
+            { time: 652, plate: "MH21AC5333", type: "ENTRY", color: "black", desc: "Black Bike" },
+            { time: 671, plate: "MH20GN8766", type: "BLACKLIST", reason: "UNREGISTERED", color: "yellow", desc: "Black Bike (Gold)" }
+        ];
+
+        // --- 3. VIDEO SYNC LOGIC ---
+        const video = document.getElementById('gateVideo');
+        let processedEvents = new Set();
+
+        video.addEventListener('timeupdate', () => {
+            const currentTime = Math.floor(video.currentTime);
+            
+            // Update Clock
+            const minutes = Math.floor(currentTime / 60).toString().padStart(2, '0');
+            const seconds = (currentTime % 60).toString().padStart(2, '0');
+            const timeString = `00:${minutes}:${seconds}`;
+            document.getElementById('videoTime').innerText = timeString;
+
+            vehicleEvents.forEach((event, index) => {
+                // Trigger logic
+                if (currentTime === event.time && !processedEvents.has(index)) {
+                    
+                    // 1. Show UI Overlay
+                    showOverlay(event.plate);
+                    
+                    // 2. INSERT INTO SQL DATABASE
+                    insertIntoDB(event, timeString);
+                    
+                    processedEvents.add(index);
+                }
+            });
+            
+            // Reset loop
+            if(currentTime < 1) processedEvents.clear();
+        });
+
+        // --- 4. SQL OPERATIONS ---
+        
+        function insertIntoDB(data, videoTime) {
+            const now = new Date().toLocaleTimeString();
+            
+            if (data.type === 'BLACKLIST') {
+                // Insert into Blacklist Table
+                const sql = `INSERT INTO blacklist_logs (timestamp, plate, reason) VALUES ("${videoTime}", "${data.plate}", "${data.reason}")`;
+                alasql(sql);
+                printSQL(sql); // Show query in console
+            } else {
+                // Insert into Vehicle Logs Table
+                const sql = `INSERT INTO vehicle_logs (timestamp, plate, description, action, entry_time) VALUES ("${videoTime}", "${data.plate}", "${data.desc}", "${data.type}", "${now}")`;
+                alasql(sql);
+                printSQL(sql); // Show query in console
+            }
+            
+            // Refresh UI by Reading from DB
+            refreshTables();
+        }
+
+        function refreshTables() {
+            // A. Fetch Vehicle Logs
+            // SELECT * FROM vehicle_logs ORDER BY id DESC
+            const logs = alasql('SELECT * FROM vehicle_logs ORDER BY id DESC');
+            const logTable = document.getElementById('logTable');
+            logTable.innerHTML = '';
+
+            logs.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/50 border-b border-slate-800/50 log-enter";
+                const badgeColor = row.action === 'ENTRY' ? 'text-green-400 border-green-400/30' : 'text-yellow-400 border-yellow-400/30';
+                
+                tr.innerHTML = `
+                    <td class="p-3 text-slate-500 font-mono text-xs">#${row.id}</td>
+                    <td class="p-3">
+                        <div class="flex flex-col">
+                            <span class="plate-font text-white font-bold text-xs">${row.plate}</span>
+                            <span class="text-[10px] text-slate-500">${row.timestamp}</span>
+                        </div>
+                    </td>
+                    <td class="p-3 text-xs text-slate-400">${row.description}</td>
+                    <td class="p-3 text-right">
+                        <span class="text-[10px] font-bold px-2 py-1 rounded border ${badgeColor} bg-slate-900">
+                            ${row.action}
+                        </span>
+                    </td>
+                `;
+                logTable.appendChild(tr);
+            });
+
+            // B. Fetch Blacklist Logs
+            const alerts = alasql('SELECT * FROM blacklist_logs ORDER BY id DESC');
+            const alertTable = document.getElementById('blacklistTable');
+            alertTable.innerHTML = '';
+
+            alerts.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = "critical-alert border-b border-red-900/20";
+                tr.innerHTML = `
+                    <td class="p-3 text-red-300 font-mono text-xs">${row.timestamp}</td>
+                    <td class="p-3 font-bold text-white plate-font">${row.plate}</td>
+                    <td class="p-3 text-right text-red-400 text-xs font-bold">${row.reason}</td>
+                `;
+                alertTable.appendChild(tr);
+            });
+        }
+
+        function clearDB() {
+            alasql('DELETE FROM vehicle_logs');
+            alasql('DELETE FROM blacklist_logs');
+            printSQL("TRUNCATE TABLE vehicle_logs; TRUNCATE TABLE blacklist_logs;");
+            processedEvents.clear();
+            refreshTables();
+        }
+
+        // --- 5. UI UTILITIES ---
+        function printSQL(query) {
+            const consoleEl = document.getElementById('sqlConsole');
+            const line = document.createElement('div');
+            line.className = "border-l-2 border-amber-600 pl-2 mb-1";
+            line.innerHTML = `<span class="text-amber-500 font-bold">SQL></span> <span class="text-slate-300">${query}</span>`;
+            consoleEl.prepend(line);
+        }
+
+        function showOverlay(plate) {
+            const box = document.getElementById('detectionBox');
+            const text = document.getElementById('detectedPlateOverlay');
+            
+            // Random positioning to simulate tracking
+            const randomTop = 45 + (Math.random() * 10 - 5); 
+            const randomLeft = 40 + (Math.random() * 10 - 5);
+            
+            box.style.top = `${randomTop}%`;
+            box.style.left = `${randomLeft}%`;
+            text.innerText = plate;
+            
+            box.classList.remove('hidden');
+            setTimeout(() => box.classList.add('hidden'), 3000);
+        }
+
+        // Update Real-world Clock
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+        }, 1000);
+
+        // Initialize DB on Load
+        window.onload = initSQL;
+
+    </script>
+</body>
+</html>
